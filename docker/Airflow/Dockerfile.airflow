@@ -1,0 +1,7 @@
+FROM apache/airflow:3.0.0
+
+# Optionally, reinstall only what you want
+# COPY requirements.txt .
+# RUN pip install --no-cache-dir -r requirements.txt
+
+# RUN pip install --no-deps apache-airflow-providers-apache-spark

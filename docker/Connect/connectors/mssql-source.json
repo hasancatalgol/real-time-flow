@@ -1,0 +1,25 @@
+{
+  "name": "mssql-source",
+  "config": {
+    "connector.class": "io.debezium.connector.sqlserver.SqlServerConnector",
+    "database.hostname": "mssql-server",
+    "database.port": "1433",
+    "database.user": "sa",
+    "database.password": "YourStrong!Passw0rd",
+    "database.names": "sipay",
+    "database.server.name": "sqlserver",
+    "table.include.list": "dbo.transactions",
+    "topic.prefix": "cdc",
+    "snapshot.mode": "initial_only",
+    "include.schema.changes": "false",
+    "errors.log.enable": "true",
+    "errors.log.include.messages": "true",
+    "key.converter": "org.apache.kafka.connect.json.JsonConverter",
+    "value.converter": "org.apache.kafka.connect.json.JsonConverter",
+    "key.converter.schemas.enable": "false",
+    "value.converter.schemas.enable": "false",
+    "database.encrypt": "false",
+    "schema.history.internal.kafka.bootstrap.servers": "kafka:9092",
+    "schema.history.internal.kafka.topic": "schemahistory.mssql"
+  }
+}

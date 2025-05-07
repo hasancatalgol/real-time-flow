@@ -1,0 +1,14 @@
+FROM debezium/connect:3.0.0.Final
+
+USER root
+
+# Create directory for plugins
+RUN mkdir -p /kafka/connect/debezium-plugins
+
+# Download and extract Debezium SQL Server connector
+RUN curl -sSL https://repo1.maven.org/maven2/io/debezium/debezium-connector-sqlserver/3.0.0.Final/debezium-connector-sqlserver-3.0.0.Final-plugin.tar.gz \
+    | tar -xzf - -C /kafka/connect/debezium-plugins
+
+# ✅ Download and extract Debezium PostgreSQL connector
+# RUN curl -sSL https://repo1.maven.org/maven2/io/debezium/debezium-connector-postgres/3.0.0.Final/debezium-connector-postgres-3.0.0.Final-plugin.tar.gz \
+# | tar -xzf - -C /kafka/connect/debezium-plugins
