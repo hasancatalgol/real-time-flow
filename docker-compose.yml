@@ -35,7 +35,7 @@ x-airflow-common:
     - ${AIRFLOW_PROJ_DIR:-.}/config:/opt/airflow/config
     - ${AIRFLOW_PROJ_DIR:-.}/plugins:/opt/airflow/plugins
   networks:
-      - sipay-net
+      - test-net
   user: "${AIRFLOW_UID:-50000}:0"
   depends_on:
     &airflow-common-depends-on
@@ -60,7 +60,7 @@ services:
       start_period: 5s
     restart: always
     networks:
-      - sipay-net
+      - test-net
   redis:
     # Redis is limited to 7.2-bookworm due to licencing change
     # https://redis.io/blog/redis-adopts-dual-source-available-licensing/
@@ -76,7 +76,7 @@ services:
       start_period: 30s
     restart: always
     networks:
-      - sipay-net
+      - test-net
   airflow-apiserver:
     <<: *airflow-common
     ports:
@@ -240,7 +240,7 @@ services:
     depends_on:
       <<: *airflow-common-depends-on
     networks:
-      - sipay-net
+      - test-net
 
   mssql-server:
     build:
@@ -264,7 +264,7 @@ services:
       retries: 5
       start_period: 30s
     networks:
-      - sipay-net
+      - test-net
   dwh:
     image: postgres:15-alpine
     profiles: ["db"] 
@@ -283,7 +283,7 @@ services:
       - dwh_data2:/var/lib/postgresql/data
       - ./init/dwh:/docker-entrypoint-initdb.d
     networks:
-      sipay-net:
+      test-net:
       
   debezium-ui:
     profiles: ["kafka"] 
@@ -297,7 +297,7 @@ services:
     environment:
       KAFKA_CONNECT_URIS: http://connect:8083
     networks:
-      - sipay-net
+      - test-net
   connect:
     build:
       context: ./docker/Connect
@@ -321,7 +321,7 @@ services:
       CONNECT_REST_ADVERTISED_HOST_NAME: connect
       CONNECT_PLUGIN_PATH: /kafka/connect/debezium-plugins
     networks:
-      - sipay-net
+      - test-net
     volumes:
       - ./docker/Connect/connectors:/kafka/connectors:ro
     healthcheck:
@@ -374,7 +374,7 @@ services:
       CLUSTER_ID: qTqYxK8aQHeTjvNRA8gTIQ
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
     networks:
-      - sipay-net
+      - test-net
 
   confluent-control-center:
     image: confluentinc/cp-enterprise-control-center:7.9.0
@@ -399,12 +399,12 @@ services:
       - kafka
       - connect
     networks:
-      - sipay-net
+      - test-net
 volumes:
   postgres-db-volume:
   mssql-data:
   dwh_data2:
   
 networks:
-  sipay-net:
+  test-net:
     driver: bridge
