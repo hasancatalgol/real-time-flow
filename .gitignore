@@ -1,2 +1,5 @@
-/docker/MSSQL/dataset.csv
+/docker/mssql/dataset.csv
+/docker/mssql/backups/*
+/docker/mssql/data/*
+/docker/mssql/log/*
 

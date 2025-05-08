@@ -2,32 +2,33 @@
 set -e
 set -x
 
-echo "Starting SQL Server..."
-# Run SQL Server in the background using exec to maintain PID 1
-exec /opt/mssql/bin/sqlservr &
-pid=$!
+# Start SQL Server in background
+/opt/mssql/bin/sqlservr &
 
-echo "Waiting for SQL Server to start..."
-until /opt/mssql-tools/bin/sqlcmd -S localhost -U SA -P "$MSSQL_SA_PASSWORD" -Q "SELECT 1" &> /dev/null
-do
-    echo -n "."
-    sleep 1
+# Wait for SQL Server to be ready (max 30 attempts)
+for i in {1..30}; do
+  /opt/mssql-tools18/bin/sqlcmd -S localhost -U SA -P "${SA_PASSWORD}" -Q "SELECT 1" -N -C && break
+  echo "Waiting for SQL Server to start..."
+  sleep 2
 done
-echo -e "\nSQL Server is up. Running initialization scripts..."
 
-# Dataset handling
-if [ -f /usr/src/app/initdb/dataset.csv ]; then
-    echo "Copying dataset to SQL Server backup folder..."
-    # No need for mkdir/chown if directory was pre-created in Dockerfile
-    cp /usr/src/app/initdb/dataset.csv /var/opt/mssql/backup/dataset.csv
+
+# Final check
+if ! /opt/mssql-tools18/bin/sqlcmd -S localhost -U SA -P "${SA_PASSWORD}" -Q "SELECT 1" -N -C; then
+  echo "ERROR: SQL Server did not become ready in time."
+  exit 1
 fi
 
-# SQL initialization
-if [ -f /usr/src/app/initdb/create_transactions.sql ]; then
-    echo "Running create_transactions.sql..."
-    /opt/mssql-tools/bin/sqlcmd -S localhost -U SA -P "$MSSQL_SA_PASSWORD" -d master \
-        -i /usr/src/app/initdb/create_transactions.sql
-fi
+# Run all .sql scripts in /scripts (sorted)
+SCRIPT_DIR="/var/opt/mssql/scripts"
+for script in \
+  "$SCRIPT_DIR/create_databases.sql" \
+  "$SCRIPT_DIR/create_tables.sql" \
+  "$SCRIPT_DIR/enable_cdc.sql"; do
 
-echo "Initialization complete. SQL Server is now running."
-wait $pid
+  [ -f "$script" ] && echo "Running $script" && \
+  /opt/mssql-tools18/bin/sqlcmd -S localhost -U SA -P "${SA_PASSWORD}" -d master -i "$script" -N -C
+done
+
+# Keep SQL Server in foreground
+wait

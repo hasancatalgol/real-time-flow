@@ -244,30 +244,40 @@ services:
 
   mssql-server:
     build:
-      context: ./docker/MSSQL
+      context: ./docker/mssql
       dockerfile: Dockerfile.mssql
     profiles: ["db"] 
     container_name: mssql-server
     ports:
       - "1433:1433"
     environment:
+      TZ: "Europe/Istanbul"
       MSSQL_PID: "Developer"
-      SA_PASSWORD: "YourStrong!Passw0rd"
+      MSSQL_LCID: 1033
+      SA_PASSWORD: ${SA_PASSWORD}
       ACCEPT_EULA: "Y"
       MSSQL_AGENT_ENABLED: "true"
-    volumes:
-      - mssql-data:/var/opt/mssql:z
-    healthcheck:
-      test: ["CMD", "/opt/mssql-tools/bin/sqlcmd", "-S", "localhost", "-U", "sa", "-P", "YourStrong!Passw0rd", "-Q", "SELECT 1"]
-      interval: 10s
-      timeout: 10s
-      retries: 5
-      start_period: 30s
+      MSSQL_BACKUP_DIR: /var/opt/mssql/backups
+    # healthcheck:
+    #   test: ["CMD", "/opt/mssql-tools/bin/sqlcmd", "-S", "localhost", "-U", "sa", "-P", "${SA_PASSWORD}", "-Q", "SELECT 1"]
+    #   interval: 10s
+    #   timeout: 10s
+    #   retries: 5
+    #   start_period: 30s
     networks:
       - test-net
+    volumes:
+      - ./docker/mssql/backups:/var/opt/mssql/backups
+      - ./docker/mssql/data:/var/opt/mssql/data
+      - ./docker/mssql/log:/var/opt/mssql/log
+      - ./docker/mssql/scripts:/var/opt/mssql/scripts   
+      # - mssql-data:/var/opt/mssql/data
+      # - mssql-backups:/var/opt/mssql/backups
+      # - mssql-log:/var/opt/mssql/log
+      
   dwh:
     image: postgres:15-alpine
-    profiles: ["db"] 
+    # profiles: ["db"] 
     ports:
       - "5433:5432"
     environment:
@@ -402,7 +412,6 @@ services:
       - test-net
 volumes:
   postgres-db-volume:
-  mssql-data:
   dwh_data2:
   
 networks:
