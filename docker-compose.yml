@@ -362,7 +362,7 @@ services:
 
 
   kafka:
-    image: confluentinc/cp-kafka:7.9.0
+    image: confluentinc/cp-kafka:7.9.1
     container_name: kafka
     hostname: kafka
     profiles: ["kafka"]
@@ -387,7 +387,7 @@ services:
       - test-net
 
   confluent-control-center:
-    image: confluentinc/cp-enterprise-control-center:7.9.0
+    image: confluentinc/cp-enterprise-control-center:7.9.1
     hostname: control-center
     profiles: ["kafka"]
     container_name: control-center
@@ -410,9 +410,62 @@ services:
       - connect
     networks:
       - test-net
+  sql-client:
+    build:
+      context: ./docker/Flink
+      dockerfile: Dockerfile.flink
+    profiles: ["kafka"]
+    depends_on:
+      - jobmanager
+    environment:
+      - |
+        FLINK_PROPERTIES=
+        jobmanager.rpc.address: jobmanager
+        rest.address: jobmanager
+  jobmanager:
+    build:
+      context: ./docker/Flink
+      dockerfile: Dockerfile.flink
+    profiles: ["kafka"]
+    ports:
+      - "8081:8081"
+    command: jobmanager
+    volumes:
+      - flink_data:/tmp/
+    environment:
+      - |
+        FLINK_PROPERTIES=
+        jobmanager.rpc.address: jobmanager
+        state.backend: filesystem
+        state.checkpoints.dir: file:///tmp/flink-checkpoints
+        heartbeat.interval: 1000
+        heartbeat.timeout: 5000
+        rest.flamegraph.enabled: true
+        web.backpressure.refresh-interval: 10000
+  taskmanager:
+    build:
+      context: ./docker/Flink
+      dockerfile: Dockerfile.flink
+    profiles: ["kafka"]
+    depends_on:
+      - jobmanager
+    command: taskmanager
+    volumes:
+      - flink_data:/tmp/
+    environment:
+      - |
+        FLINK_PROPERTIES=
+        jobmanager.rpc.address: jobmanager
+        taskmanager.numberOfTaskSlots: 3
+        state.backend: filesystem
+        state.checkpoints.dir: file:///tmp/flink-checkpoints
+        heartbeat.interval: 1000
+        heartbeat.timeout: 5000
+
 volumes:
   postgres-db-volume:
   dwh_data2:
+  flink_data:
   
 networks:
   test-net:
